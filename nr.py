@@ -50,38 +50,6 @@ def nr_read(expr):
   val = expr.split()[0].split(')')[0]
   s = expr[len(val):]
   return nr_parse_atom(val), s
-nr_read('(2 \n 1)')
-
-nr_read('#((2 1))')
-
-
-def car(expr):
-  try:
-    return expr[0]
-  except:
-    return []
-assert(car([1, 2]) == 1)
-assert(car(1) == [])
-
-def cdr(expr):
-  try:
-    return expr[1:]
-  except:
-    return []
-assert(cdr([1, 2, 3]) == [2, 3])
-
-def cons(a, b):
-  return [a, *b]
-
-def assoc(arr, key):
-  if arr == []:
-    return []
-  p = car(arr)
-  if car(p) == key:
-    return p
-  return assoc(cdr(arr), key)
-assoc([['a', 1], ['b', 2], ['c', 3]], 'b')
-
 
 
 def nr_eval(env, expr):
@@ -92,38 +60,80 @@ def nr_eval(env, expr):
     return exop(env, payl, expr[1:])
   return expr
 
-def nr_evlis(env, lst):
+def nr_list(env, lst):
   return list(map(lambda expr: nr_eval(env, expr), lst))
 
-#let's do a normal lisp first
 
 
-def nr_add(env, payl, args):
-  return sum(nr_evlis(env, args))
-
-def nr_inop(env, payl, args):
-  new_env = {**env, **dict(zip(payl['argsyms'], args))}
+def op_inop(env, payl, args):
+  new_env = {**env, **dict(zip(payl['argsyms'], nr_list(env, args)))}
   return nr_eval(new_env, payl['code'])
 
+def op_dict(env, payl, args):
+  return dict(nr_list(env, args))
 
+#TODO implicit progn
+def op_fn(env, payl, args):
+  return [op_inop, {'code': args[1], 'argsyms': args[0]}]
 
+def op_quote(env, payl, args):
+  return args[0]
+
+def op_list(env, payl, args):
+  return nr_list(env, args)
+
+def op_car(env, payl, args):
+  return nr_eval(env, args[0])[0]
+
+def op_cdr(env, payl, args):
+  return nr_eval(env, args[0])[1:]
+
+def op_cons(env, payl, args):
+  return [nr_eval(env, args[0]), *nr_eval(env, args[1])]
+
+def op_if(env, payl, args):
+  if nr_eval(env, args[0]) != []:
+    return nr_eval(env, args[1])
+  else:
+    return nr_eval(env, args[2])
+
+def op_def(env, payl, args):
+  env[args[0]] = nr_eval(env, args[1])
+  return args[0]
+
+def op_add(env, payl, args):
+  l = nr_list(env, args)
+  return sum(nr_list(env, args))
 
 env = {
-  'a': 1,
-  'b': 2,
-  'c': 3,
-  '+': [nr_add, {}],
+  '~': [],
+  "'": [op_quote, {}],
+  '+': [op_add, {}],
+  '<': [op_car, {}],   
+  '>': [op_cdr, {}],   
+  'if': [op_if, {}],
+  'cons': [op_cons, {}],
+  'l': [op_list, {}],
+  'fn': [op_fn, {}],
+  'def': [op_def, {}],
   '*2': [
-     nr_inop, {
+     op_inop, 
+     {
        'code': ['+', 'x', 'x'],
        'argsyms': ['x']
+     }
+  ],
+  '*2+': [
+     op_inop, 
+     {
+       'code': ['+', ['*2', 'x'], 'y'],
+       'argsyms': ['x', 'y']
      }
   ],
 }
 #nr_eval(env, 'a')
 #nr_eval(env, '+')
-nr_eval(env, ['+', 1, 2])
-nr_eval(env, ['*2', 3])
+#nr_eval(env, ['+', 1, 2])
 
 
 def repl():
@@ -145,6 +155,5 @@ def repl():
   except EOFError as e:
     set_echo(True)
     print(e)
-repl()
-  
+repl()  
 
