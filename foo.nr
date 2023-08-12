@@ -11,7 +11,7 @@
 
 (fn (x y) (+ x x y y))
 
-(? ~ 2 3)
+(if ~ 2 3)
 
 (< (' (1 2 3)))
 (> (' (1 2 3)))
@@ -23,7 +23,23 @@
             (map (> lst) f))
       ~)))
 
-(map (l 1 2 3 4)
-  (fn (x) (+ x x x x)))
+(def lfold
+  (fn (init lst f)
+    (if lst
+      (lfold (f init (< lst)) (> lst) f) 
+      init)))
 
+(def rfold
+  (fn (init lst f)
+    (if lst
+      (f (< lst) (rfold init (> lst) f))
+      init)))
+
+
+(map (l 1 2 3 4) (fn (x)
+  (+ x x x x)))
+
+(lfold 0 (l 1 2 3 4) -)
+
+(rfold 0 (l 1 2 3 4) -)
 

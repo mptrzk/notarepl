@@ -102,16 +102,13 @@ def op_def(env, payl, args):
   return args[0]
 
 def op_add(env, payl, args):
+  l = nr_list(env, args)
   return sum(nr_list(env, args))
-
-def op_sub(env, payl, args):
-  return nr_eval(env, args[0]) - nr_eval(env, args[1])
 
 env = {
   '~': [],
   "'": [op_quote, {}],
   '+': [op_add, {}],
-  '-': [op_sub, {}],
   '<': [op_car, {}],   
   '>': [op_cdr, {}],   
   'if': [op_if, {}],
@@ -124,6 +121,13 @@ env = {
      {
        'code': ['+', 'x', 'x'],
        'argsyms': ['x']
+     }
+  ],
+  '*2+': [
+     op_inop, 
+     {
+       'code': ['+', ['*2', 'x'], 'y'],
+       'argsyms': ['x', 'y']
      }
   ],
 }
@@ -145,10 +149,9 @@ def repl():
         if parens == 0:
           break
         buf += '\n  '
-      if buf.strip() != '':
-        expr, _ = nr_read(buf)
-        ans = nr_eval(env, expr)
-        write(f'\n\n> {buf}\n{ans}')
+      expr, _ = nr_read(buf)
+      ans = nr_eval(env, expr)
+      write(f'\n\n> {buf}\n{ans}')
   except EOFError as e:
     set_echo(True)
     print(e)
