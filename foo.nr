@@ -35,11 +35,17 @@
       (f (< lst) (rfold init (> lst) f))
       init)))
 
+(def reverse
+  (fn (lst acc)
+    (if lst
+      (reverse (> lst) (cons (< lst) acc))
+      acc)))
+
+(reverse (l 1 2 3) ~)
 
 (map (l 1 2 3 4) (fn (x)
   (+ x x x x)))
 
 (lfold 0 (l 1 2 3 4) -)
-
 (rfold 0 (l 1 2 3 4) -)
 

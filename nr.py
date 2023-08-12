@@ -149,8 +149,12 @@ def repl():
         expr, _ = nr_read(buf)
         ans = nr_eval(env, expr)
         write(f'\n\n> {buf}\n{ans}')
-  except EOFError as e:
+  except EOFError:
+    pass
+  except Exception as e:
+    print(e) 
+  finally:
     set_echo(True)
-    print(e)
 repl()  
+
 

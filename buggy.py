@@ -66,7 +66,7 @@ def nr_list(env, lst):
 
 
 def op_inop(env, payl, args):
-  new_env = {**env, **dict(zip(payl['argsyms'], nr_list(env, args)))}
+  new_env = {**env, **dict(zip(payl['argsyms'], args))}
   return nr_eval(new_env, payl['code'])
 
 def op_dict(env, payl, args):
