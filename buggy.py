@@ -1,14 +1,14 @@
+import os
 import sys
 import termios
+import pdb
+
+
+def stty(opt, val):
+  os.system(f'stty {"" if val else "-"}{opt}')
 
 def set_echo(x):
-  fd = sys.stdin.fileno()
-  attr = termios.tcgetattr(fd)
-  if x:
-    attr[3] |= termios.ECHO
-  else:
-    attr[3] &= ~termios.ECHO
-  termios.tcsetattr(fd, termios.TCSANOW, attr)
+  stty('echo', x)
 
 def write(s):
   print(s, end='')
@@ -50,7 +50,6 @@ def nr_read(expr):
   val = expr.split()[0].split(')')[0]
   s = expr[len(val):]
   return nr_parse_atom(val), s
-
 
 def nr_eval(env, expr):
   if isinstance(expr, str):
@@ -102,10 +101,10 @@ def op_def(env, payl, args):
   return args[0]
 
 def op_add(env, payl, args):
-  l = nr_list(env, args)
   return sum(nr_list(env, args))
 
 env = {
+  'a': 3,
   '~': [],
   "'": [op_quote, {}],
   '+': [op_add, {}],
@@ -135,6 +134,13 @@ env = {
 #nr_eval(env, '+')
 #nr_eval(env, ['+', 1, 2])
 
+def ev(x):
+  return nr_eval(env, nr_read(x)[0])
+
+ev('(*2 (+ 1 2))')
+ev('(*2 a)')
+
+
 
 def repl():
   try:
@@ -153,7 +159,8 @@ def repl():
       ans = nr_eval(env, expr)
       write(f'\n\n> {buf}\n{ans}')
   except EOFError as e:
+    pass
+  finally:
     set_echo(True)
-    print(e)
 repl()  
 

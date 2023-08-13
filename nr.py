@@ -1,17 +1,10 @@
+import os
 import sys
 import termios
+import ast
 
-def set_echo(x):
-  fd = sys.stdin.fileno()
-  attr = termios.tcgetattr(fd)
-  if x:
-    attr[3] |= termios.ECHO
-  else:
-    attr[3] &= ~termios.ECHO
-  termios.tcsetattr(fd, termios.TCSANOW, attr)
-
-def write(s):
-  print(s, end='')
+def stty(x):
+  os.system(f'stty {x}')
 
 
 def count_parens(s):
@@ -22,6 +15,31 @@ def count_parens(s):
     if c == ')':
       n -= 1
   return n
+assert(count_parens('') == 0)
+assert(count_parens(')') == -1)
+assert(count_parens('(') == 1)
+assert(count_parens('(())()((') == 2)
+
+
+def nr_parse_atom(val):
+  if val in ['NaN', 'inf', '-inf']: 
+    return float(val)
+  try:
+    return ast.literal_eval(val)
+  except:
+    return val
+assert(type(nr_parse_atom('')) == str)
+assert(type(nr_parse_atom('dffd')) == str)
+assert(type(nr_parse_atom('1')) == int)
+assert(type(nr_parse_atom('-1')) == int)
+assert(type(nr_parse_atom('0x19')) == int)
+assert(type(nr_parse_atom('-0x19')) == int)
+assert(type(nr_parse_atom('0.0')) == float)
+assert(type(nr_parse_atom('inf')) == float)
+assert(type(nr_parse_atom('2.9e9')) == float)
+assert(nr_parse_atom('19') == 19)
+#type(nr_parse_atom('-0b19')) #TODO - raise exception for invalid digits
+
 
 def nr_list_read(expr):
   expr = expr.strip()
@@ -30,15 +48,6 @@ def nr_list_read(expr):
   first, s1 = nr_read(expr) 
   rest, s2 = nr_list_read(s1)
   return [first, *rest], s2
-
-def nr_parse_atom(val):
-  try:
-    return int(val)
-  except:
-    try:
-      return float(val)
-    except:
-      return val
 
 def nr_read(expr):
   expr = expr.strip()
@@ -131,10 +140,12 @@ env = {
 #nr_eval(env, '+')
 #nr_eval(env, ['+', 1, 2])
 
+def write(s):
+  print(s, end='')
 
 def repl():
   try:
-    set_echo(False)
+    stty('-echo')
     while True:
       buf = ''
       parens = count_parens(buf)
@@ -151,10 +162,8 @@ def repl():
         write(f'\n\n> {buf}\n{ans}')
   except EOFError:
     pass
-  except Exception as e:
-    print(e) 
   finally:
-    set_echo(True)
+    stty('echo')
 repl()  
 
 
